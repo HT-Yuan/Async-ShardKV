@@ -8,23 +8,29 @@ package shardkv
 // talks to the group that holds the key's shard.
 //
 
-import "../labrpc"
-import "crypto/rand"
-import "math/big"
-import "../shardmaster"
-import "time"
+import (
+	"crypto/rand"
+	"math/big"
+	"time"
+
+	"../labrpc"
+	"../shardmaster"
+)
 
 //
 // which shard is a key in?
 // please use this function,
 // and please do not change it.
 //
+
 func key2shard(key string) int {
 	shard := 0
 	if len(key) > 0 {
 		shard = int(key[0])
 	}
+
 	shard %= shardmaster.NShards
+
 	return shard
 }
 
@@ -40,6 +46,8 @@ type Clerk struct {
 	config   shardmaster.Config
 	make_end func(string) *labrpc.ClientEnd
 	// You will have to modify this struct.
+	id       int64 //每一个Clerk具有唯一的索引
+	cmdindex int   //command索引
 }
 
 //
@@ -56,6 +64,8 @@ func MakeClerk(masters []*labrpc.ClientEnd, make_end func(string) *labrpc.Client
 	ck.sm = shardmaster.MakeClerk(masters)
 	ck.make_end = make_end
 	// You'll have to add code here.
+	ck.id = nrand()
+	ck.cmdindex = 0
 	return ck
 }
 
@@ -100,11 +110,7 @@ func (ck *Clerk) Get(key string) string {
 // You will have to modify this function.
 //
 func (ck *Clerk) PutAppend(key string, value string, op string) {
-	args := PutAppendArgs{}
-	args.Key = key
-	args.Value = value
-	args.Op = op
-
+	args := PutAppendArgs{Key: key, Value: value, Op: op, ClientId: ck.id, CommandId: ck.cmdindex}
 
 	for {
 		shard := key2shard(key)
@@ -115,6 +121,7 @@ func (ck *Clerk) PutAppend(key string, value string, op string) {
 				var reply PutAppendReply
 				ok := srv.Call("ShardKV.PutAppend", &args, &reply)
 				if ok && reply.Err == OK {
+					ck.cmdindex++
 					return
 				}
 				if ok && reply.Err == ErrWrongGroup {

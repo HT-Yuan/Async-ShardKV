@@ -829,6 +829,7 @@ func (rf *Raft) applyCommited() {
 				Command:      entry.Command,
 				CommandIndex: index,
 			}
+
 		}
 		rf.lastApplied = int(math.Max(float64(rf.lastApplied), float64(commitIndex)))
 		DPrintf("[term %d]:Raft[%d] state[%d] apply log entry %d to the service successfully", rf.currentTerm, rf.me, rf.state, rf.lastApplied)

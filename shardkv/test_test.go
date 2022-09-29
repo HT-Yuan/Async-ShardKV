@@ -30,8 +30,9 @@ func TestStaticShards(t *testing.T) {
 	defer cfg.cleanup()
 
 	ck := cfg.makeClient()
-
+	fmt.Println("EVENT: join0")
 	cfg.join(0)
+	fmt.Println("EVENT: join1")
 	cfg.join(1)
 
 	n := 10
@@ -46,9 +47,10 @@ func TestStaticShards(t *testing.T) {
 		check(t, ck, ka[i], va[i])
 	}
 
-	// make sure that the data really is sharded by
-	// shutting down one shard and checking that some
-	// Get()s don't succeed.
+	// // make sure that the data really is sharded by
+	// // shutting down one shard and checking that some
+	// // Get()s don't succeed.
+	fmt.Println("EVENT: ShutdownGroup1")
 	cfg.ShutdownGroup(1)
 	cfg.checklogs() // forbid snapshots
 
@@ -78,8 +80,11 @@ func TestStaticShards(t *testing.T) {
 		t.Fatalf("expected 5 completions with one shard dead; got %v\n", ndone)
 	}
 
+	// time.Sleep(10000 * time.Millisecond)
+	fmt.Println("EVENT: StartGroup 1")
 	// bring the crashed shard/group back to life.
 	cfg.StartGroup(1)
+
 	for i := 0; i < n; i++ {
 		check(t, ck, ka[i], va[i])
 	}
@@ -454,6 +459,7 @@ func TestUnreliable1(t *testing.T) {
 
 	ck := cfg.makeClient()
 
+	fmt.Println("EVENT: join0")
 	cfg.join(0)
 
 	n := 10
@@ -464,9 +470,11 @@ func TestUnreliable1(t *testing.T) {
 		va[i] = randstring(5)
 		ck.Put(ka[i], va[i])
 	}
-
+	fmt.Println("EVENT: join1")
 	cfg.join(1)
+	fmt.Println("EVENT: join2")
 	cfg.join(2)
+	fmt.Println("EVENT: leave0")
 	cfg.leave(0)
 
 	for ii := 0; ii < n*2; ii++ {
@@ -476,8 +484,9 @@ func TestUnreliable1(t *testing.T) {
 		ck.Append(ka[i], x)
 		va[i] += x
 	}
-
+	fmt.Println("EVENT: join0")
 	cfg.join(0)
+	fmt.Println("EVENT: leave1")
 	cfg.leave(1)
 
 	for ii := 0; ii < n*2; ii++ {
@@ -495,7 +504,7 @@ func TestUnreliable2(t *testing.T) {
 	defer cfg.cleanup()
 
 	ck := cfg.makeClient()
-
+	fmt.Println("EVENT: join0")
 	cfg.join(0)
 
 	n := 10
@@ -525,15 +534,21 @@ func TestUnreliable2(t *testing.T) {
 	}
 
 	time.Sleep(150 * time.Millisecond)
+	fmt.Println("EVENT: join1")
 	cfg.join(1)
 	time.Sleep(500 * time.Millisecond)
+	fmt.Println("EVENT: join2")
 	cfg.join(2)
 	time.Sleep(500 * time.Millisecond)
+	fmt.Println("EVENT: leave0")
 	cfg.leave(0)
 	time.Sleep(500 * time.Millisecond)
+	fmt.Println("EVENT: leave1")
 	cfg.leave(1)
 	time.Sleep(500 * time.Millisecond)
+	fmt.Println("EVENT: join1")
 	cfg.join(1)
+	fmt.Println("EVENT: join0")
 	cfg.join(0)
 
 	time.Sleep(2 * time.Second)
